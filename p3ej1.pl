@@ -20,16 +20,16 @@ colorear([region(_, Color, ColoresVecinos)|Ms],Colores):-
     colorear(Ms,Colores),
     \+member(Color, ColoresVecinos).
 
-colorear(
-    [
-        region(a,Ca,[Cb, Cc, Cd]),
-        region(b,Cb,[Ca, Cc, Ce]), 
-        region(c,Cc,[Ca, Cb, Cd, Ce]),
-        region(d,Cd,[Ca, Cc, Cf]),
-        region(e,Ce,[Cb, Cc, Cf]),
-        region(f,Cf,[Cd, Cc, Ce])
-    ],
-    [
-        color_1, color_2, color_3, color_4
-    ]
-).
+% colorear(
+%     [
+%         region(a,Ca,[Cb, Cc, Cd]),
+%         region(b,Cb,[Ca, Cc, Ce]), 
+%         region(c,Cc,[Ca, Cb, Cd, Ce]),
+%         region(d,Cd,[Ca, Cc, Cf]),
+%         region(e,Ce,[Cb, Cc, Cf]),
+%         region(f,Cf,[Cd, Cc, Ce])
+%     ],
+%     [
+%         color_1, color_2, color_3, color_4
+%     ]
+% ).
