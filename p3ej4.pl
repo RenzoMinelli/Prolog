@@ -16,18 +16,13 @@ hombre(h_1).
 hombre(h_2).
 hombre(h_3).
 
-estado_invalido(estado(_,[m_1,h_2],_,_)).
-estado_invalido(estado(_,[m_1,h_3],_,_)).
-estado_invalido(estado(_,[m_2,h_1],_,_)).
-estado_invalido(estado(_,[m_2,h_3],_,_)).
-estado_invalido(estado(_,[m_3,h_1],_,_)).
-estado_invalido(estado(_,[m_3,h_2],_,_)).
-estado_invalido(estado([h_1|R],_,_,_)) :- mujer(M), member(M,R), \+member(m_1,R).
-estado_invalido(estado([h_2|R],_,_,_)) :- mujer(M), member(M,R), \+member(m_2,R).
-estado_invalido(estado([h_3|R],_,_,_)) :- mujer(M), member(M,R), \+member(m_3,R).
-estado_invalido(estado(_,_,[h_1|R],_)) :- mujer(M), member(M,R), \+member(m_1,R).
-estado_invalido(estado(_,_,[h_2|R],_)) :- mujer(M), member(M,R), \+member(m_2,R).
-estado_invalido(estado(_,_,[h_3|R],_)) :- mujer(M), member(M,R), \+member(m_3,R).
+pareja(h_1, m_1).
+pareja(h_2, m_2).
+pareja(h_3, m_3).
+
+estado_invalido(estado(_,Barco,_,_)) :- hombre(H), member(H, Barco), mujer(M), member(M, Barco), \+pareja(H,M).
+estado_invalido(estado(Izq,_,_,_)) :- hombre(H), member(H, Izq), pareja(H,Esposa), \+member(Esposa,Izq), mujer(M), member(M,Izq).
+estado_invalido(estado(_,_,Der,_)) :- hombre(H), member(H, Der), pareja(H,Esposa), \+member(Esposa,Der), mujer(M), member(M,Der).
 
 subir_barco(estado(Izq,Barco,Der,barco_izq), estado(IzqResto,NBarco,Der,barco_izq)):-
     length(Barco,CantTripulantes),
@@ -57,20 +52,26 @@ bajar_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,NBarco,NDer,barco_der)):
     append([P],Der,NDer),
     \+estado_invalido(estado(Izq,NBarco,NDer,barco_der)).
 
+moverse(estado(Izq,Barco,Der,barco_der), estado(Izq,Barco,Der,barco_izq)).
+moverse(estado(Izq,Barco,Der,barco_izq), estado(Izq,Barco,Der,barco_der)).
+
+
 cambiar_estado(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)) :-
     subir_barco(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)).
 
 cambiar_estado(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)) :-
     subir_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)).
 
-cambiar_estado(estado(Izq,Barco,Der,barco_izq),estado(Izq,Barco,Der,barco_der)).
-cambiar_estado(estado(Izq,Barco,Der,barco_der),estado(Izq,Barco,Der,barco_izq)).
-
 cambiar_estado(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)) :-
     bajar_barco(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)).
 
 cambiar_estado(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)) :-
     bajar_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)).
+
+cambiar_estado(estado(Izq,Barco,Der,Lado),EstadoN) :- 
+    length(Barco,CantTripulantes),
+    CantTripulantes > 0,
+    moverse(estado(Izq,Barco,Der,Lado),EstadoN).
 
 estado_final(estado([],[],Der,barco_der)):-
     member(m_1,Der),
