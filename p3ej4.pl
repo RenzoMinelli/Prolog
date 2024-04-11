@@ -58,16 +58,34 @@ bajar_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,NBarco,NDer,barco_der)):
     \+estado_invalido(estado(Izq,NBarco,NDer,barco_der)).
 
 cambiar_estado(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)) :-
-    bajar_barco(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)).
-
-cambiar_estado(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)) :-
     subir_barco(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)).
-
-cambiar_estado(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)) :-
-    bajar_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)).
 
 cambiar_estado(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)) :-
     subir_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)).
 
 cambiar_estado(estado(Izq,Barco,Der,barco_izq),estado(Izq,Barco,Der,barco_der)).
 cambiar_estado(estado(Izq,Barco,Der,barco_der),estado(Izq,Barco,Der,barco_izq)).
+
+cambiar_estado(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)) :-
+    bajar_barco(estado(Izq,Barco,Der,barco_izq), estado(IzqN,BarcoN,Der,barco_izq)).
+
+cambiar_estado(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)) :-
+    bajar_barco(estado(Izq,Barco,Der,barco_der), estado(Izq,BarcoN,DerN,barco_der)).
+
+estado_final(estado([],[],Der,barco_der)):-
+    member(m_1,Der),
+    member(m_2,Der),
+    member(m_3,Der),
+    member(h_1,Der),
+    member(h_2,Der),
+    member(h_3,Der).
+
+viajes_acum([Estado|[]]) :- estado_final(Estado).
+viajes_acum([Estado1, Estado2 | Estados]) :-
+    cambiar_estado(Estado1,Estado2),
+    viajes_acum([Estado2|Estados]).
+
+estado_inicial(estado([h_1,m_1,h_2,m_2,h_3,m_3],[],[],barco_izq)).
+viajes([E|Es]):-
+    estado_inicial(E),
+    viajes_acum([E|Es]).
