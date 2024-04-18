@@ -72,20 +72,12 @@ columna([[F|RestoFila]|MT], [F|CT], [RestoFila|RT]):-
 transpuesta([[]|_], []).
 transpuesta(M, [C|T]) :- columna(M, C, R), transpuesta(R, T).
 
-
 % bloques(+M,+K,?B) ← M es una matriz que representa un sudoku de orden K, B es
 % su lista de bloques, donde cada bloque es una lista de K² números obtenidos de
 % M. Notar que cada bloque es lista simple, no lista de listas. La cantidad de bloques
 % a obtener será también K². Por ejemplo (ver también Fig. 2):
 % ?- bloques([[2,1,3,4], [4,3,2,1], [1,2,4,3], [3,4,1,2]], 2, B).
 % B = [[2,1,4,3], [3,4,2,1], [1,2,3,4], [4,3,1,2]]
-
-% primeras_k_columnas(M,0,[],M).
-% primeras_k_columnas(M,K,[C|Cols],RestoColsM):-
-%     K>0,
-%     K1 is K-1,
-%     columna(M,C,RestoM),
-%     primeras_k_columnas(RestoM,K1,Cols,RestoColsM).
 
 achatar([],[]).
 achatar([L|Ls],R) :-
@@ -109,3 +101,27 @@ bloques(M,K,Bloques) :-
     bloques_en_fila(KPrimerasFilas,K,BloquesFila),
     bloques(RestoFilas,K,BloquesResto),
     append(BloquesFila,BloquesResto,Bloques). % ver si se puede mergear de otra forma
+
+% sudoku(+M,+K) ← M es una matriz que representa un sudoku de orden K, el
+% predicado es verdadero si M es un sudoku correcto resuelto. Notar que podrá
+% instanciarse con una matriz que tenga algunos de los valores no instanciados, y
+% se espera que el predicado complete los que faltan. Por ejemplo:
+% ?- M=[[1,_,_,2],[_,2,_,_],[_,_,4,1],[_,_,_,3]],sudoku(M,2).
+% M = [[1,4,3,2],[3,2,1,4],[2,3,4,1],[4,1,2,3]]
+
+chequear_permutacion([L],ListaK) :- 
+    permutacion(ListaK,L).
+
+chequear_permutacion([L|Ls],ListaK) :-
+    permutacion(ListaK,L),
+    chequear_permutacion(Ls,ListaK).
+
+sudoku(M,K):-
+    K>0,
+    K2 is K**2,
+    rango(K2,ListaK),
+    chequear_permutacion(M,ListaK),
+    transpuesta(M,MT),
+    chequear_permutacion(MT,ListaK),
+    bloques(M,K,B),
+    chequear_permutacion(B,ListaK).
