@@ -71,3 +71,41 @@ columna([[F|RestoFila]|MT], [F|CT], [RestoFila|RT]):-
 
 transpuesta([[]|_], []).
 transpuesta(M, [C|T]) :- columna(M, C, R), transpuesta(R, T).
+
+
+% bloques(+M,+K,?B) ← M es una matriz que representa un sudoku de orden K, B es
+% su lista de bloques, donde cada bloque es una lista de K² números obtenidos de
+% M. Notar que cada bloque es lista simple, no lista de listas. La cantidad de bloques
+% a obtener será también K². Por ejemplo (ver también Fig. 2):
+% ?- bloques([[2,1,3,4], [4,3,2,1], [1,2,4,3], [3,4,1,2]], 2, B).
+% B = [[2,1,4,3], [3,4,2,1], [1,2,3,4], [4,3,1,2]]
+
+% primeras_k_columnas(M,0,[],M).
+% primeras_k_columnas(M,K,[C|Cols],RestoColsM):-
+%     K>0,
+%     K1 is K-1,
+%     columna(M,C,RestoM),
+%     primeras_k_columnas(RestoM,K1,Cols,RestoColsM).
+
+achatar([],[]).
+achatar([L|Ls],R) :-
+    achatar(Ls,LsAchatado),
+    append(L,LsAchatado,R).
+
+primeros_k_de_filas([],_,[],[]).
+primeros_k_de_filas([F|M],K,[KElems|Fs],[RestoFila|RestoFilasM]) :-
+    tomar_n(F,K,KElems,RestoFila),
+    primeros_k_de_filas(M,K,Fs,RestoFilasM).
+
+bloques_en_fila([[]|_],_,[]).
+bloques_en_fila(M,K,[L1|RestoBloques]) :-
+    primeros_k_de_filas(M,K,B1,RestoM),
+    achatar(B1,L1),
+    bloques_en_fila(RestoM,K,RestoBloques).
+
+bloques([],_,[]).
+bloques(M,K,Bloques) :-
+    tomar_n(M,K,KPrimerasFilas,RestoFilas),
+    bloques_en_fila(KPrimerasFilas,K,BloquesFila),
+    bloques(RestoFilas,K,BloquesResto),
+    append(BloquesFila,BloquesResto,Bloques). % ver si se puede mergear de otra forma
