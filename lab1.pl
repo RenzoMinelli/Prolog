@@ -101,9 +101,8 @@ bloques_en_fila(M,K,[L1|RestoBloques]) :-
 
 % bloques(+M,+K,?B) ← M es una matriz que representa un sudoku de orden K, B es
 % su lista de bloques, donde cada bloque es una lista de K² números obtenidos de
-% M. Notar que cada bloque es lista simple, no lista de listas. La cantidad de bloques
-% a obtener será también K². 
-% ?- bloques([[2,1,3,4], [4,3,2,1], [1,2,4,3], [3,4,1,2]], 2, B).
+% M. La cantidad de bloques a obtener será también K².
+% Ej.: bloques([[2,1,3,4], [4,3,2,1], [1,2,4,3], [3,4,1,2]], 2, B).
 % B = [[2,1,4,3], [3,4,2,1], [1,2,3,4], [4,3,1,2]]
 
 bloques([],_,[]).
@@ -124,10 +123,8 @@ chequear_permutacion(ListaK,[L|Ls]) :-
     chequear_permutacion(ListaK,Ls).
 
 % sudoku(+M,+K) ← M es una matriz que representa un sudoku de orden K, el
-% predicado es verdadero si M es un sudoku correcto resuelto. Notar que podrá
-% instanciarse con una matriz que tenga algunos de los valores no instanciados, y
-% se espera que el predicado complete los que faltan. Por ejemplo:
-% ?- M=[[1,_,_,2],[_,2,_,_],[_,_,4,1],[_,_,_,3]],sudoku(M,2).
+% predicado es verdadero si M es un sudoku correcto resuelto. 
+% Ej.: M=[[1,_,_,2],[_,2,_,_],[_,_,4,1],[_,_,_,3]],sudoku(M,2).
 % M = [[1,4,3,2],[3,2,1,4],[2,3,4,1],[4,1,2,3]]
 
 sudoku(M,K):-
