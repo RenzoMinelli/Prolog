@@ -8,13 +8,10 @@ ocurrencias([X|L], Num, Cant) :- X \= Num, ocurrencias(L, Num, Cant).
 cantidad_ocurrencias(_, [], _, 0).
 cantidad_ocurrencias(Dados, [X|_], N, Num) :- 
   ocurrencias(Dados, X, Cant), 
-  % writeln('dados:', Dados,'Num:',Num,'Cant:',Cant, 'N:',N),
   Cant >= N,
   Num = X.
 cantidad_ocurrencias(Dados, [X|L], N, Num) :-
   ocurrencias(Dados, X, Cant),
-  % writeln('Num:',Num),
-  % writeln('Cant:',Cant, 'N:',N,'X:',X),
   Cant < N,
   cantidad_ocurrencias(Dados, L, N, Num).
 
@@ -55,8 +52,6 @@ puntaje(fives, Puntos) :-
 puntaje(sixes, Puntos) :- 
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
   ocurrencias([V1,V2,V3,V4,V5], 6, N), Puntos is N*6.
-
-% ------------------------------------------------------------
 
 puntaje(three_of_a_kind, Puntos) :- 
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
@@ -101,9 +96,6 @@ puntaje(full_house, 0) :-
   select(Num, [1,2,3,4,5,6], L),
   cantidad_ocurrencias([V1,V2,V3,V4,V5], L, 2, 0).
 
-
-% ------------------------------------------------------------
-    
 hay_small_straight:-
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
   ocurrencias([V1,V2,V3,V4,V5], 1, N1), N1 > 0,
@@ -157,4 +149,5 @@ evidence(dado(2,3), true).
 evidence(dado(3,4), true).
 evidence(dado(4,5), true).
 evidence(dado(5,3), true).
+
 query(puntaje(Cat,Puntaje)).
