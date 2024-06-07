@@ -5,12 +5,16 @@ ocurrencias([X|L], Num, Cant) :- X \= Num, ocurrencias(L, Num, Cant).
 
 cantidad_ocurrencias(_, [], _, 0).
 cantidad_ocurrencias(Dados, [Num|_], N, Num) :- 
-    ocurrencias(Dados, Num, Cant), 
-    Cant >= N.
+  ocurrencias(Dados, Num, Cant), 
+  Cant >= N.
 cantidad_ocurrencias(Dados, [X|L], N, Num) :-
   ocurrencias(Dados, X, Cant),
   Cant < N,
+  X \= Num,
   cantidad_ocurrencias(Dados, L, N, Num).
+
+suma_lista([], 0).
+suma_lista([X|L], Cant) :- suma_lista(L, Cant_rec), Cant is Cant_rec + X.
 
 % ------------------------------------
 
@@ -25,7 +29,6 @@ cantidad_ocurrencias(Dados, [X|L], N, Num) :-
 
 puntaje(aces, Puntos) :- 
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
-  writeln([V1,V2,V3,V4,V5]),
   ocurrencias([V1,V2,V3,V4,V5], 1, Puntos).
 
 puntaje(twos, Puntos) :- 
@@ -48,6 +51,8 @@ puntaje(sixes, Puntos) :-
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
   ocurrencias([V1,V2,V3,V4,V5], 6, N), Puntos is N*6.
 
+% ------------------------------------------------------------
+
 puntaje(three_of_a_kind, Puntos) :- 
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, Num), 
@@ -61,29 +66,36 @@ puntaje(four_of_a_kind, Puntos) :-
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 4, Num),
   Num \= 0, 
-  suma_lista(Dados, Puntos).
+  suma_lista([V1,V2,V3,V4,V5], Puntos).
 puntaje(four_of_a_kind, 0):-
   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 4, 0).
 
 
-puntaje(full_house, 25) :- 
-  dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
-  cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 5, Num), 
-  Num \= 0.
+% puntaje(full_house, 0) :-
+%   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
+%   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, 0).
 
-puntaje(full_house, 0) :-
-  dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
-  cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, 0).
+% puntaje(full_house, 25) :- 
+%   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
+%   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 5, Num), 
+%   Num \= 0.
 
-puntaje(full_house, 25) :-
-  dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
-  cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, Num),
-  select(Num, [1,2,3,4,5,6], L),
-  cantidad_ocurrencias([V1,V2,V3,V4,V5], L, 2, Num1),
-  Num1 \= 0,
-puntaje(full_house, 25)
-puntaje(_, full_house, 0).
+% puntaje(full_house, 25) :-
+%   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
+%   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, Num),
+%   select(Num, [1,2,3,4,5,6], L),
+%   cantidad_ocurrencias([V1,V2,V3,V4,V5], L, 2, Num1),
+%   Num1 \= 0.
+
+% puntaje(full_house, 0) :-
+%   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
+%   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, Num),
+%   select(Num, [1,2,3,4,5,6], L),
+%   cantidad_ocurrencias([V1,V2,V3,V4,V5], L, 2, 0).
+
+
+% ------------------------------------------------------------
     
 % puntaje(small_straight, Puntos) :- 
 %   dado(1,V1),dado(2,V2),dado(3,V3),dado(4,V4),dado(5,V5),
@@ -131,8 +143,8 @@ puntaje(_, full_house, 0).
 %   suma_lista([V1,V2,V3,V4,V5], Puntos).
 
 evidence(dado(1,1), true).
-evidence(dado(2,2), true).
-evidence(dado(3,2), true).
-evidence(dado(4,1), true).
-evidence(dado(5,5), true).
+evidence(dado(2,3), true).
+evidence(dado(3,3), true).
+evidence(dado(4,3), true).
+evidence(dado(5,3), true).
 query(puntaje(Cat,Puntaje)).
