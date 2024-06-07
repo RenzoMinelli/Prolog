@@ -51,7 +51,7 @@ puntaje_por_categoria(three_of_a_kind, [V1,V2,V3,V4,V5], Puntos) :-
   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, Num), 
   Num \= 0, 
   suma_lista([V1,V2,V3,V4,V5], Puntos).
-puntaje_por_categoria(three_of_a_kind, 0) :-
+puntaje_por_categoria(three_of_a_kind, [V1,V2,V3,V4,V5], 0) :-
   cantidad_ocurrencias([V1,V2,V3,V4,V5], [1,2,3,4,5,6], 3, 0).
 
 puntaje_por_categoria(four_of_a_kind, [V1,V2,V3,V4,V5], Puntos) :- 
@@ -123,7 +123,7 @@ puntaje_por_categoria(chance, [V1,V2,V3,V4,V5], Puntos) :-
   suma_lista([V1,V2,V3,V4,V5], Puntos).
 
 evidence(dado(1,2), true).
-evidence(dado(2,3), true).
+% evidence(dado(2,3), true).
 evidence(dado(3,4), true).
 evidence(dado(4,5), true).
 % evidence(dado(5,3), true).
