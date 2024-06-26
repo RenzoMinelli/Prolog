@@ -437,25 +437,19 @@ obtener_patron([_|L1], chance, _, [1|L2], _) :- obtener_patron(L1, chance, [], L
 %--------------------------------------------------------------------------------------------------------------------------------
 
 calcular_valores_esperados([], Dados, _, Mejor_categoria, Mejor_mantener, Completados, Patron) :- 
-    % writeln('-------------------------------'),
     obtener_patron(Dados, Mejor_categoria, Mejor_mantener, Patron, Completados).
-    % writeln((Mejor_categoria, Patron)),
-    % writeln('-------------------------------').
 calcular_valores_esperados([s(Campo, Valor)|R], Dados, Mejor_ve, _, _, Completados, Patron) :-
     dados_faltantes(Dados, Campo, Faltan, Mantener, Completados),
     Ve is Valor/(6^Faltan),
     Ve > Mejor_ve,
-    % writeln((Campo, Ve)),
     calcular_valores_esperados(R, Dados, Ve, Campo, Mantener, Completados, Patron), !.
-calcular_valores_esperados([s(Campo, Valor)|R], Dados, Mejor_ve, Mejor_categoria, Mejor_mantener, Completados, Patron) :-
-    dados_faltantes(Dados, Campo, Faltan, _, Completados),
-    Ve is Valor/(6^Faltan),
-    % writeln((Campo, Ve)),
+calcular_valores_esperados([s(Campo, _)|R], Dados, Mejor_ve, Mejor_categoria, Mejor_mantener, Completados, Patron) :-
+    dados_faltantes(Dados, Campo, _, _, Completados),
     calcular_valores_esperados(R, Dados, Mejor_ve, Mejor_categoria, Mejor_mantener, Completados, Patron).
 
 obtener_categorias_completados([],[]).
 
-obtener_categorias_completados([s(Cat,nil)|Ls],Completados):-
+obtener_categorias_completados([s(_,nil)|Ls],Completados):-
     obtener_categorias_completados(Ls,Completados), !.
 
 obtener_categorias_completados([s(Cat,_)|Ls],[Cat|Completados]):-
@@ -468,6 +462,208 @@ cambio_dados(Dados, Tablero, ia_det, Patron) :-
     categorias_disponibles(Cats, Categorias_completadas, Disponibles),
     calcular_valores_esperados(Disponibles, Dados, 0, nil, nil, Categorias_completadas, Patron).
 
+% --------------------------------------------------------------------------------------------------------------------------------
+
+% ia_det
+
+:- use_module(library(filesex)).
+
+% Invoco a Problog a partir de un modelo 
+% Y consulto el resultado para obtener 
+% las consultas y su probabilidad
+
+consultar_probabilidades(ListaValores):-
+    % Problog debe estar en el path!
+    absolute_file_name(path(problog),Problog,[access(exist),extensions([exe])]),
+    % Nombre del modelo, que se supone está en el mismo directorio que el fuente
+    absolute_file_name(modelo_problog_dev,Modelo,[file_type(prolog)]),
+    % Invoca a problog con el modelo como argumento, y envía la salida a un pipe
+    process_create(Problog,[Modelo],[stdout(pipe(In))]),
+    % Convierte la salida a un string
+    read_string(In,_,Result),
+    % Divide la salida
+    split_string(Result,"\n\t","\r ",L),
+    % Escribo la salida
+    % writeln(Result),
+    % Quito último elemento de la lista
+    append(L1,[_],L),
+    lista_valores(L1,ListaValores).
+
+% Predicado auxiliar para transformar a términos y a números, como se espera
+lista_valores([X,Y|T],[TermValor|T1]):-
+    % Saco los dos puntos del final
+    split_string(X,"",":",[X1|_]),
+    term_string(TermX,X1),
+    TermX =.. [puntaje,Cat,Valor],
+    number_string(NumberY,Y),
+    TermValor =.. [p,Cat,Valor,NumberY],
+    lista_valores(T,T1).
+lista_valores([],[]).
+
+% obtiene el valor esperado por cada categoria 
+agrupar_por_cat([],[]).
+agrupar_por_cat([p(Cat,Valor,Prob)|Ps],Agrupado):-
+    agrupar_por_cat(Ps,AgrupadoResto),
+    select((Cat,ValorAux),AgrupadoResto,AgrupadoAux), !,
+    ValorNuevo is (Prob * Valor) + ValorAux,
+    Agrupado = [(Cat,ValorNuevo)|AgrupadoAux].
+agrupar_por_cat([p(Cat,Valor,Prob)|Ps],Agrupado):-
+    agrupar_por_cat(Ps,AgrupadoResto),
+    ValorNuevo is (Prob * Valor),
+    Agrupado = [(Cat,ValorNuevo)|AgrupadoResto].
+
+% obtiene los valores esperados de las categorias
+valores_esperados(ValoresEsperados):-
+    consultar_probabilidades(Probs),
+    agrupar_por_cat(Probs,ValoresEsperados).
+
+mejor_valor_esperado_aux([], ValMax, ValMax).
+mejor_valor_esperado_aux([(_,Val)|CatVals], ValAcc, ValMax):-
+    Val > ValAcc, !,
+    mejor_valor_esperado_aux(CatVals, Val, ValMax).
+mejor_valor_esperado_aux([_|CatVals], ValAcc, ValMax):-
+    mejor_valor_esperado_aux(CatVals, ValAcc, ValMax).
+
+% te da la categoria que tiene mayor valor esperado
+mejor_valor_esperado([(Cat,Val)|CatVals], ValMax):-
+    mejor_valor_esperado_aux([(Cat,Val)|CatVals], 0, ValMax).
+
+% quita las categorias que ya fueron ocupadas
+quitar_categorias_ocupadas([],_,[]).
+quitar_categorias_ocupadas([(Cat,_)|CatVals], CategoriasOcupadas, CatValsFiltradas) :-
+    select(Cat, CategoriasOcupadas, CatsOcupadasResto), !,
+    quitar_categorias_ocupadas(CatVals, CatsOcupadasResto, CatValsFiltradas).
+quitar_categorias_ocupadas([(Cat,V)|CatVals], CategoriasOcupadas, [(Cat,V)|CatValsFiltradas]) :-
+    quitar_categorias_ocupadas(CatVals, CategoriasOcupadas, CatValsFiltradas).
+
+% te da la categoria que tiene mayor valor esperado y que no fue ocupada
+valor_esperado_para_patron(CategoriasOcupadas, ValorEsperado):- % se llama una vez que el patron ya esta setteado como evidencia en el modelo
+    valores_esperados(ValoresEsperados),
+    quitar_categorias_ocupadas(ValoresEsperados, CategoriasOcupadas, ValoresEsperadosFiltrados),
+    mejor_valor_esperado(ValoresEsperadosFiltrados, ValorEsperado).
+
+cargar_evidencias_en_archivo_aux([], _).
+cargar_evidencias_en_archivo_aux([E|RestoEvidencias], Stream):-
+    write(Stream, E),
+    write(Stream, '.'),
+    nl(Stream),
+    cargar_evidencias_en_archivo_aux(RestoEvidencias, Stream).
+
+cargar_evidencias_en_archivo(Evidencias) :-
+    open('modelo_problog_dev.pl', append, Stream),
+    cargar_evidencias_en_archivo_aux(Evidencias, Stream),
+    close(Stream).
+
+reiniciar_archivo :-
+  open('modelo_problog.pl', read, StreamOriginal),
+  read_string(StreamOriginal, _, Lines),
+  close(StreamOriginal),
+  open('modelo_problog_dev.pl', write, Stream),
+  write(Stream, Lines),
+  close(Stream).
+
+% ACA SE TIENE QUE CAMBIAR PARA PONER UNA QUERY POR LAS CATEGORIAS QUE YA SE COMPLETARON
+cargar_query(CategoriasCompletadas):-
+    open('modelo_problog_dev.pl', append, Stream),
+    write(Stream, 'query(puntaje(Cat,'),
+    write(Stream, CategoriasCompletadas),
+    write(Stream, ', Puntos)).'),
+    close(Stream).
+
+construir_evidencia(1,D,E):-
+    E =.. [evidence,dado1(D),true].
+construir_evidencia(2,D,E):-
+    E =.. [evidence,dado2(D),true].
+construir_evidencia(3,D,E):-
+    E =.. [evidence,dado3(D),true].
+construir_evidencia(4,D,E):-
+    E =.. [evidence,dado4(D),true].
+construir_evidencia(5,D,E):-
+    E =.. [evidence,dado5(D),true].
+
+
+generar_evidencias_aux([], [], [], _).
+generar_evidencias_aux([D|RestoDados], [0|RestoPatron], [E|RestoEvidencias], I):-
+    construir_evidencia(I,D,E),
+    I1 is I - 1,
+    generar_evidencias_aux(RestoDados, RestoPatron, RestoEvidencias, I1), !.
+generar_evidencias_aux([_|RestoDados], [1|RestoPatron], RestoEvidencias, I):-
+    I1 is I - 1,
+    generar_evidencias_aux(RestoDados, RestoPatron, RestoEvidencias, I1).
+
+cargar_evidencias_y_query(Dados, Patron, CategoriasCompletadas) :-
+    generar_evidencias_aux(Dados, Patron, Evidencias, 5),
+    reiniciar_archivo,
+    cargar_evidencias_en_archivo(Evidencias),
+    cargar_query(CategoriasCompletadas).
+
+patrones_posibles(Patrones):-
+    Patrones = [
+                [0,0,0,0,0],
+                [0,0,0,0,1],
+                [0,0,0,1,0],
+                [0,0,0,1,1],
+                [0,0,1,0,0],
+                [0,0,1,0,1],
+                [0,0,1,1,0],
+                % [0,0,1,1,1],
+                [0,1,0,0,0],
+                [0,1,0,0,1],
+                [0,1,0,1,0],
+                % [0,1,0,1,1],
+                [0,1,1,0,0],
+                % [0,1,1,0,1],
+                % [0,1,1,1,0],
+                % [0,1,1,1,1],
+                [1,0,0,0,0],
+                [1,0,0,0,1],
+                [1,0,0,1,0],
+                % [1,0,0,1,1],
+                [1,0,1,0,0],
+                % [1,0,1,0,1],
+                % [1,0,1,1,0],
+                % [1,0,1,1,1],
+                [1,1,0,0,0]
+                % [1,1,0,0,1],
+                % [1,1,0,1,0],
+                % [1,1,0,1,1],
+                % [1,1,1,0,0]
+                % [1,1,1,0,1],
+                % [1,1,1,1,0],
+                % [1,1,1,1,1]
+                ].
+
+patron_con_mejor_valor_esperado_aux(_, _, [], Mejor, Mejor).
+patron_con_mejor_valor_esperado_aux(Dados, CategoriasCompletadas, [P|PatronesPosibles], (_, ValAcc), (MejorPatron, MejorValor)):-
+    cargar_evidencias_y_query(Dados, P, CategoriasCompletadas),
+    time(valor_esperado_para_patron(CategoriasCompletadas, ValorEsperado)),
+    ValorEsperado > ValAcc, !,
+    patron_con_mejor_valor_esperado_aux(Dados, CategoriasCompletadas, PatronesPosibles, (P, ValorEsperado), (MejorPatron, MejorValor)).
+patron_con_mejor_valor_esperado_aux(Dados, CategoriasCompletadas, [_|PatronesPosibles], Acc, Mejor):-
+    patron_con_mejor_valor_esperado_aux(Dados, CategoriasCompletadas, PatronesPosibles, Acc, Mejor).
+
+patron_con_mejor_valor_esperado(Dados, CategoriasCompletadas, MejorPatron):-
+    patrones_posibles(Patrones),
+    patron_con_mejor_valor_esperado_aux(Dados, CategoriasCompletadas, Patrones, ([], -1), (MejorPatron, _)).
+
+
+
+obtener_categorias_completados([],[]).
+
+obtener_categorias_completados([s(_,nil)|Ls],Completados):-
+    obtener_categorias_completados(Ls,Completados), !.
+
+obtener_categorias_completados([s(Cat,_)|Ls],[Cat|Completados]):-
+    obtener_categorias_completados(Ls,Completados).
+
+
+cambio_dados(Dados, Tablero, ia_prob, Patron):-
+    obtener_categorias_completados(Tablero, CategoriasCompletadas),
+    patron_con_mejor_valor_esperado(Dados, CategoriasCompletadas, Patron),
+    writeln(Patron).
+
+
+
 %--------------------------------------------------------------------------------------------------------------------------------
 
 eleccion_slot(Dados, Tablero, ia_det, Categoria) :- 
@@ -477,6 +673,9 @@ eleccion_slot(Dados, Tablero, ia_det, Categoria) :-
     obtener_categorias_completados(Tablero, Categorias_completadas),
     Cats = [aces, twos, threes, fours, fives, sixes, three_of_a_kind, four_of_a_kind, full_house, small_straight, large_straight, yahtzee, chance],
     mejor_categoria_it(Dados, Categorias_completadas, Cats, Categoria, _).
+
+eleccion_slot(Dados, Tablero, ia_prob, Categoria) :- 
+    eleccion_slot(Dados, Tablero, ia_det, Categoria).
 
 mejor_categoria_it(_, _, [], _, 0).
 mejor_categoria_it(Dados, Completados, [Cat|L], Cat, Puntos1) :-
@@ -590,12 +789,12 @@ mejor_categoria(Dados, Completados, aces, Puntos) :-
 % UI IA
 
 % IA DET
-yahtzeelog(ia_det, Seed):-
+yahtzeelog(Estrategia, Seed):-
     iniciar(Seed),
     inicial(Tablero),
-    yahtzeelog_con_ronda(1, ia_det, Tablero).
+    yahtzeelog_con_ronda(1, Estrategia, Tablero).
 
-yahtzeelog_con_ronda(NumRonda, ia_det, Estado_tablero):-
+yahtzeelog_con_ronda(NumRonda, Estrategia, Estado_tablero):-
     NumRonda < 14,
     writeln('Comienzo de ronda: '),
     writeln(NumRonda),
@@ -611,7 +810,7 @@ yahtzeelog_con_ronda(NumRonda, ia_det, Estado_tablero):-
     % mostrar_tablero(Puntajes),
 
 
-    cambio_dados(Dados, Estado_tablero, ia_det, Patron),
+    cambio_dados(Dados, Estado_tablero, Estrategia, Patron),
     lanzamiento(Dados, Patron, Dados_relanzados),
 
     writeln('Patron:'),
@@ -620,7 +819,7 @@ yahtzeelog_con_ronda(NumRonda, ia_det, Estado_tablero):-
     writeln(Dados_relanzados),
     
     
-    cambio_dados(Dados_relanzados, Estado_tablero, ia_det, Patron2),
+    cambio_dados(Dados_relanzados, Estado_tablero, Estrategia, Patron2),
     lanzamiento(Dados_relanzados, Patron2, Dados_definitivos),
 
     writeln('Patron2:'),
@@ -630,7 +829,7 @@ yahtzeelog_con_ronda(NumRonda, ia_det, Estado_tablero):-
     
 
     % elegir slot donde asignar los puntos
-    eleccion_slot(Dados_definitivos, Estado_tablero, ia_det, Categoria),
+    eleccion_slot(Dados_definitivos, Estado_tablero, Estrategia, Categoria),
     writeln('Categoria:'),
     writeln(Categoria),
 
@@ -644,14 +843,13 @@ yahtzeelog_con_ronda(NumRonda, ia_det, Estado_tablero):-
     mostrar_tablero(Nuevo_tablero),
     % continuar con la siguiente ronda
     NumRonda_siguiente is NumRonda + 1,
-    yahtzeelog_con_ronda(NumRonda_siguiente, ia_det, Nuevo_tablero).
+    yahtzeelog_con_ronda(NumRonda_siguiente, Estrategia, Nuevo_tablero).
 
-yahtzeelog_con_ronda(14, ia_det, Tablero):-
+yahtzeelog_con_ronda(14, _, Tablero):-
     writeln('Fin del juego'),
     writeln('Tablero final:'),
     mostrar_tablero(Tablero),
     writeln('Puntaje final:'),
     puntaje_tablero(Tablero, Puntaje_final),
     writeln(Puntaje_final).
-    
     

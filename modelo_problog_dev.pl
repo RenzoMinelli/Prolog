@@ -127,3 +127,10 @@ puntaje(Categoria, Puntos):-
   dado1(V1), dado2(V2), dado3(V3), dado4(V4), dado5(V5),
   puntaje_por_categoria(Categoria, [V1,V2,V3,V4,V5], Puntos).
 
+evidence(dado3(3),true).
+evidence(dado2(3),true).
+evidence(dado1(4),true).
+
+query(puntaje(yahtzee, Puntos)).
+query(puntaje(aces, Puntos)).
+query(puntaje(twos, Puntos)).
