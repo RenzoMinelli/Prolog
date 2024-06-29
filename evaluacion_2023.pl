@@ -38,15 +38,30 @@ cruce(estado(Izq1,Der1,right),estado(Izq2,Der2,left),T):-
     tiempo(P1,T1), tiempo(P2,T2),
     mayor(T1,T2,T).
 
-% recorrido de cambios de estado que la suma es T
-recorrido([estado([],[a,b,c,d],right)],0).
-recorrido([E1,E2|Estados],T):-
-    cruce(E1,E2,T1),
-    recorrido([E2|Estados],T2),
-    T is T1+T2.
+camino(X,Y,Visitados,[X,Y],T) :-
+    cruce(X,Y,T),
+    \+member(Y,Visitados).
 
-problema([estado([a,b,c,d],[],left)|RestoCamino]):-
-    recorrido([estado([a,b,c,d],[],left)|RestoCamino], T),
+camino(X,Y,Visitados,[X|Camino], T):-
+    cruce(X,Z,T1),
+    \+member(Z,Visitados),
+    camino(Z,Y,[X|Visitados],Camino, T2),
+    T is T1 + T2.
+
+% Estado final
+final(estado([],Final,_)):-
+    sort(Final,[a,b,c,d]).
+% Estado inicial
+inicial(estado([a,b,c,d],[],left)).
+   
+% recorrido de cambios de estado que la suma es T
+recorrido(Camino,T):-
+    inicial(X),
+    camino(X,Y,[],Camino,T),
+    final(Y).
+
+problema(Camino):-
+    recorrido(Camino, T),
     T < 15.
     
     
