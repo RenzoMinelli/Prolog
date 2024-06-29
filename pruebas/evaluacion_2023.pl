@@ -86,7 +86,8 @@ escalera:-
     X \= Y, Y\=Z.
 
 todos_iguales :-
-    dado(1,X), dado(2,X), dado(3,Z).
+    dado(1,X), dado(2,X), dado(3,X).
+
 query(escalera).
 query(todos_iguales).
 
