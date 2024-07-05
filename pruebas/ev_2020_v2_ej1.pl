@@ -18,12 +18,16 @@ adyacente_valido(T,I1,J1,I2,J2):-
     valor_celda(T,I2,J2,V2),
     V2 is V1+1.
 
-viaje(T,I1,J1,I2,J2,[(I1,J1),(I2,J2)]):-
-    adyacente_valido(T,I1,J1,I2,J2).
+viaje(T,I1,J1,I2,J2,[(I1,J1),(I2,J2)],Visitados):-
+    adyacente_valido(T,I1,J1,I2,J2),
+    \+member(celda(I2,J2),Visitados).
 
-viaje(T,I1,J1,I2,J2,[(I1,J1)|Cs]):-
+viaje(T,I1,J1,I2,J2,[(I1,J1)|Cs],Visitados):-
     adyacente_valido(T,I1,J1,I3,J3),
-    viaje(T,I3,J3,I2,J2,Cs).
+    \+member(celda(I3,J3),Visitados),
+    viaje(T,I3,J3,I2,J2,Cs,[celda(I3,J3)|Visitados]).
+
+viaje(T,I1,J1,I2,J2,C):- viaje(T,I1,J1,I2,J2,C,[celda(I1,J1)]).
 
 ciclo(T,I1,J1,I2,J2,Ciclo):-
     adyacente(T,I1,J1,I2,J2),
@@ -32,12 +36,9 @@ ciclo(T,I1,J1,I2,J2,Ciclo):-
 viajes_para_celdas(_, [], []).
 
 viajes_para_celdas(T, [celda(I,J,_)|Celdas], Salida):-
-    bagof(Camino, viaje(T,I,J,I2,J2,Camino), CaminosCelda),
+    findall(Camino, viaje(T,I,J,_,_,Camino), CaminosCelda),
     viajes_para_celdas(T, Celdas, CaminosResto),
     append(CaminosCelda, CaminosResto, Salida).
-
-viajes_para_celdas(T, [_|Celdas], Salida):-
-    viajes_para_celdas(T, Celdas, Salida).
 
 camino_mas_largo([], LargoAcum, LargoAcum).
 
