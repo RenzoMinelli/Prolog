@@ -27,7 +27,9 @@ viaje(T,I1,J1,I2,J2,[(I1,J1)|Cs],Visitados):-
     \+member(celda(I3,J3),Visitados),
     viaje(T,I3,J3,I2,J2,Cs,[celda(I3,J3)|Visitados]).
 
-viaje(T,I1,J1,I2,J2,C):- viaje(T,I1,J1,I2,J2,C,[celda(I1,J1)]).
+viaje(T,I1,J1,I2,J2,C):- 
+    member(celda(I1,J1,1),T),
+    viaje(T,I1,J1,I2,J2,C,[celda(I1,J1)]).
 
 ciclo(T,I1,J1,I2,J2,Ciclo):-
     adyacente(T,I1,J1,I2,J2),
