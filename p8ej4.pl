@@ -9,8 +9,7 @@
 % matriz(+F,+C,+V,-M)  M es una matriz de F filas y C columnas
 % donde cada celda tiene el valor V
 % celda(+M,?I,?J,?V)  V es el valor de la celda (I,J) de la matriz M
-% nuevo_valor(+M,+I,
-% +J,+V)
+% nuevo_valor(+M,+I, +J,+V)
 %  Se sustituye el valor de la celda (I,J) de la
 % matriz M por V*
 % suma(+M,+N,?S)  S es la suma de las matrices M y N
